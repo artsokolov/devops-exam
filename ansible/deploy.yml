@@ -32,8 +32,6 @@
 
     - name: Setup NodeSource repo (Debian/Ubuntu)
       shell: curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-      args:
-        warn: false
       when: ansible_os_family == 'Debian'
 
     - name: Install Node.js from NodeSource (Debian/Ubuntu)
@@ -53,8 +51,6 @@
 
     - name: Setup NodeSource repo (RedHat)
       shell: curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -
-      args:
-        warn: false
       when: ansible_os_family == 'RedHat'
 
     - name: Install Node.js from NodeSource (RedHat)
