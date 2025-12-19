@@ -16,7 +16,7 @@ pipeline {
     	    }
     	}
 
-        stage('Deploy') {
+        stage('Deploy to docker machine') {
             steps {
                 withCredentials([sshUserPrivateKey(credentialsId: 'f98af94e-037c-4fa1-93ae-3429d5349d57', keyFileVariable: 'private_key', usernameVariable: 'username')]) {
           		    sh 'ssh -i ${private_key} ${username}@docker "\
@@ -24,6 +24,14 @@ pipeline {
          		    	docker run --name examnodejsapp --pull always -p 4444:4444 -d ttl.sh/examnodejsapp:2h \
           		    "'
                 }
+            }
+        }
+
+        stage('Deploy to k8s') {
+            steps {
+    	        withKubeConfig([credentialsId: 'jenkins-kube-token', serverUrl: 'https://kubernetes:6443']) {
+    			    sh 'kubectl apply -f pod.yaml'
+    		    }
             }
         }
     }
