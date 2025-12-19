@@ -18,6 +18,15 @@ pipeline {
             steps {
                 sh "mkdir -p ~/.ssh"
                 sh "ssh-keyscan -H docker >> ~/.ssh/known_hosts"
+                sh "ssh-keyscan -H target >> ~/.ssh/known_hosts"
+            }
+        }
+
+        stage('Deploy to target machine') {
+            steps {
+                ansiblePlaybook credentialsId: 'f98af94e-037c-4fa1-93ae-3429d5349d57',
+                    inventory: 'inventory.ini',
+                    playbook: 'ansible/deploy.yml'
             }
         }
 
@@ -27,14 +36,6 @@ pipeline {
     		    sh "docker push ttl.sh/examnodejsapp:2h"
     	    }
     	}
-
-        stage('Deploy to target machine') {
-            steps {
-                ansiblePlaybook credentialsId: 'f98af94e-037c-4fa1-93ae-3429d5349d57',
-                    inventory: 'inventory.ini',
-                    playbook: 'ansible/deploy.yml'
-            }
-        }
 
         stage('Deploy to docker machine') {
             steps {
