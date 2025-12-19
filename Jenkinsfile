@@ -30,9 +30,9 @@ pipeline {
 
         stage('Deploy to target machine') {
             steps {
-                sshagent(credentials: ['f98af94e-037c-4fa1-93ae-3429d5349d57']) {
-                    sh "ansible-playbook -i inventory.ini ansible/deploy.yml"
-                }
+                ansiblePlaybook credentialsId: 'f98af94e-037c-4fa1-93ae-3429d5349d57',
+                    inventory: 'inventory.ini',
+                    playbook: 'ansible/deploy.yml'
             }
         }
 
