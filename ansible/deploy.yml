@@ -77,18 +77,25 @@
         group: "{{ app_user }}"
         mode: "0755"
 
-    - name: Sync application files to target
-      synchronize:
+    - name: Copy application files to target
+      copy:
         src: "{{ playbook_dir }}/../"
         dest: "{{ app_dir }}/"
-        delete: true
-        rsync_opts:
-          - "--exclude=.git"
-          - "--exclude=node_modules"
-          - "--exclude=ansible"
-          - "--exclude=Dockerfile"
-          - "--exclude=Jenkinsfile"
-          - "--exclude=pod.yaml"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: "0644"
+
+    - name: Remove excluded paths
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ app_dir }}/.git"
+        - "{{ app_dir }}/node_modules"
+        - "{{ app_dir }}/ansible"
+        - "{{ app_dir }}/Dockerfile"
+        - "{{ app_dir }}/Jenkinsfile"
+        - "{{ app_dir }}/pod.yaml"
 
     - name: Ensure application files ownership
       file:
