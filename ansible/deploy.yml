@@ -1,12 +1,52 @@
-- name: Deploy app
+- name: Deploy Node.js app
   hosts: target
   become: true
+  gather_facts: true
 
   vars:
     app_dir: /opt/myapp
     app_user: laborant
+    service_name: myapp
+
+  pre_tasks:
+    - name: Ensure app user exists
+      user:
+        name: "{{ app_user }}"
+        state: present
+
+    - name: Update apt cache (Debian/Ubuntu)
+      apt:
+        update_cache: yes
+      when: ansible_os_family == 'Debian'
 
   tasks:
+    - name: Install Node.js, npm and rsync (Debian/Ubuntu)
+      apt:
+        name:
+          - nodejs
+          - npm
+          - rsync
+        state: present
+      when: ansible_os_family == 'Debian'
+
+    - name: Install Node.js, npm and rsync (RedHat)
+      yum:
+        name:
+          - nodejs
+          - npm
+          - rsync
+        state: present
+      when: ansible_os_family == 'RedHat'
+
+    - name: Install Node.js, npm and rsync (Alpine)
+      apk:
+        name:
+          - nodejs
+          - npm
+          - rsync
+        state: present
+      when: ansible_os_family == 'Alpine'
+
     - name: Ensure app directory exists
       file:
         path: "{{ app_dir }}"
@@ -15,27 +55,46 @@
         group: "{{ app_user }}"
         mode: "0755"
 
-    - name: Copy application files to target
-      copy:
+    - name: Sync application files to target
+      synchronize:
         src: "{{ playbook_dir }}/../"
-        dest: "{{ app_dir }}"
+        dest: "{{ app_dir }}/"
+        delete: true
+        rsync_opts:
+          - "--exclude=.git"
+          - "--exclude=node_modules"
+          - "--exclude=ansible"
+          - "--exclude=Dockerfile"
+          - "--exclude=Jenkinsfile"
+          - "--exclude=pod.yaml"
+
+    - name: Ensure application files ownership
+      file:
+        path: "{{ app_dir }}"
         owner: "{{ app_user }}"
         group: "{{ app_user }}"
-        mode: "0644"
-      exclude:
-        - .git
-        - node_modules
-        - ansible
-        - Dockerfile
+        recurse: yes
 
-    - name: Install dependencies
+    - name: Install production dependencies
       npm:
         path: "{{ app_dir }}"
         production: yes
       become_user: "{{ app_user }}"
 
-    - name: Restart app service
+    - name: Deploy systemd unit
+      template:
+        src: app.service.j2
+        dest: "/etc/systemd/system/{{ service_name }}.service"
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Reload systemd
       systemd:
-        name: myapp
+        daemon_reload: true
+
+    - name: Enable and restart app service
+      systemd:
+        name: "{{ service_name }}"
         state: restarted
         enabled: true
