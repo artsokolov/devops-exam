@@ -20,21 +20,47 @@
       when: ansible_os_family == 'Debian'
 
   tasks:
-    - name: Install Node.js, npm and rsync (Debian/Ubuntu)
+    - name: Install prerequisites for NodeSource (Debian/Ubuntu)
       apt:
         name:
-          - nodejs
-          - npm
+          - curl
+          - ca-certificates
+          - gnupg
           - rsync
         state: present
       when: ansible_os_family == 'Debian'
 
-    - name: Install Node.js, npm and rsync (RedHat)
+    - name: Setup NodeSource repo (Debian/Ubuntu)
+      shell: curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+      args:
+        warn: false
+      when: ansible_os_family == 'Debian'
+
+    - name: Install Node.js from NodeSource (Debian/Ubuntu)
+      apt:
+        name:
+          - nodejs
+        state: present
+      when: ansible_os_family == 'Debian'
+
+    - name: Install prerequisites for NodeSource (RedHat)
+      yum:
+        name:
+          - curl
+          - rsync
+        state: present
+      when: ansible_os_family == 'RedHat'
+
+    - name: Setup NodeSource repo (RedHat)
+      shell: curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -
+      args:
+        warn: false
+      when: ansible_os_family == 'RedHat'
+
+    - name: Install Node.js from NodeSource (RedHat)
       yum:
         name:
           - nodejs
-          - npm
-          - rsync
         state: present
       when: ansible_os_family == 'RedHat'
 
