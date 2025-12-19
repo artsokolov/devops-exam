@@ -48,6 +48,7 @@
           - "--exclude=ansible"
           - "--exclude=Dockerfile"
       delegate_to: localhost
+      become: false
 
     - name: Install npm dependencies
       npm:
