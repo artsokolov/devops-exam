@@ -2,6 +2,18 @@ pipeline {
     agent any
 
     stages {
+        stage('Run tests') {
+            steps {
+                sh '''
+                    docker run --rm \
+                      -v "$PWD:/app" \
+                      -w /app \
+                      node:24-alpine \
+                      sh -c "npm ci && npm test"
+                '''
+            }
+        }
+
         stage('Add known host') {
             steps {
                 sh "mkdir -p ~/.ssh"
