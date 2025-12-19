@@ -28,6 +28,12 @@ pipeline {
     	    }
     	}
 
+        stage('Deploy to target machine') {
+            steps {
+                sh "ansible-playbook -i inventory.ini ansible/deploy.yml"
+            }
+        }
+
         stage('Deploy to docker machine') {
             steps {
                 withCredentials([sshUserPrivateKey(credentialsId: 'f98af94e-037c-4fa1-93ae-3429d5349d57', keyFileVariable: 'private_key', usernameVariable: 'username')]) {

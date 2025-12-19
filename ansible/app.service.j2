@@ -1,0 +1,24 @@
+[Unit]
+Description=Exam Node.js App
+After=network.target
+
+[Service]
+Type=simple
+User={{ app_user }}
+WorkingDirectory={{ app_dir }}
+
+ExecStart=/usr/bin/node index.js
+Restart=always
+RestartSec=3
+
+KillSignal=SIGINT
+TimeoutStopSec=10
+
+Environment=NODE_ENV=production
+Environment=PORT=4444
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
