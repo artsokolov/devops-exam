@@ -1,36 +1,13 @@
----
 - name: Deploy app
   hosts: target
   become: true
 
   vars:
-    app_name: exam-app
-    app_dir: /opt/exam-app
-    app_user: nodeapp
-    node_version: "24"
+    app_dir: /opt/myapp
+    app_user: laborant
 
   tasks:
-    - name: Ensure app user exists
-      user:
-        name: "{{ app_user }}"
-        system: yes
-        create_home: no
-
-    - name: Install system dependencies
-      apt:
-        name:
-          - curl
-          - ca-certificates
-        update_cache: yes
-
-    - name: Install Node.js {{ node_version }}
-      shell: |
-        curl -fsSL https://deb.nodesource.com/setup_{{ node_version }}.x | bash -
-        apt-get install -y nodejs
-      args:
-        creates: /usr/bin/node
-
-    - name: Create application directory
+    - name: Ensure app directory exists
       file:
         path: "{{ app_dir }}"
         state: directory
@@ -38,43 +15,27 @@
         group: "{{ app_user }}"
         mode: "0755"
 
-    - name: Copy application files
-      synchronize:
-        src: ../
+    - name: Copy application files to target
+      copy:
+        src: "{{ playbook_dir }}/../"
         dest: "{{ app_dir }}"
-        rsync_opts:
-          - "--exclude=.git"
-          - "--exclude=node_modules"
-          - "--exclude=ansible"
-          - "--exclude=Dockerfile"
-      delegate_to: localhost
-      become: false
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: "0644"
+      exclude:
+        - .git
+        - node_modules
+        - ansible
+        - Dockerfile
 
-    - name: Install npm dependencies
+    - name: Install dependencies
       npm:
         path: "{{ app_dir }}"
         production: yes
       become_user: "{{ app_user }}"
 
-    - name: Set ownership
-      file:
-        path: "{{ app_dir }}"
-        owner: "{{ app_user }}"
-        group: "{{ app_user }}"
-        recurse: yes
-
-    - name: Install systemd service
-      template:
-        src: app.service.j2
-        dest: /etc/systemd/system/{{ app_name }}.service
-        mode: "0644"
-
-    - name: Reload systemd
+    - name: Restart app service
       systemd:
-        daemon_reload: yes
-
-    - name: Enable and restart app
-      systemd:
-        name: "{{ app_name }}"
-        enabled: yes
+        name: myapp
         state: restarted
+        enabled: true
